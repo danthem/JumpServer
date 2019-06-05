@@ -2,9 +2,8 @@
 #Author: Daniel Elf
 #Update: 05/06/2019
 ############# Description ############
-#   For easy jumping from my 'jump' server to other VMs / Isilon clusters.
+#   For easy jumping from my 'jump' server to other servers.
 #   
-#   Always tries to SSH as user root, modify as needed.
 ######################################
 #Syntax: ./jump.sh   (but can be configured to run as 'shell' for a jump-user)
 dbase=/data/git/JumpServer/database/jumpdb.sq3
