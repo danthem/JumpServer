@@ -1,9 +1,8 @@
 #!/bin/bash
 #Author: Daniel Elf
-#Update: 05/06/2019
+#Update: 09/06/2019
 ############# Description ############
 #   For easy jumping from my 'jump' server to other servers.
-#   
 ######################################
 #Syntax: ./jump.sh   (but can be configured to run as 'shell' for a jump-user)
 dbase=/data/git/JumpServer/database/jumpdb.sq3
@@ -67,7 +66,14 @@ function devselect(){
             printf "[${green}OK${normal}]\nOff you go! SSH'ing to to target (${blue}%s${normal})!\n\n%s\n${yellow}'exit' or CTRL+D to return to jump server ${normal}\n%s\n\n" "$opt" "-----------------------" "-----------------------"
             echo -ne "\033]0;$opt\007"
             ssh $sshuser@$sship
-            printf "%s | IP %s (%s) Disconnected from device %s\n" "$(date)" "$(echo "$SSH_CLIENT" | cut -d' ' -f 1)" "$(whoami)" "$sship" >> $logfile
+	    sshcheck=$?
+	    if [[ $sshcheck -ne 0 ]]; then
+		printf "SSH ended with an error (code: %s)\n" "$sshcheck"
+		printf "%s | IP %s (%s) Ended the SSH session to device %s with an error (code: %s)\n" "$(date)" "$(echo "$SSH_CLIENT" | cut -d' ' -f 1)" "$(whoami)" "$sship" $sshcheck"" >> $logfile
+	    	sleep 5
+	    else
+                printf "%s | IP %s (%s) Disconnected from device %s\n" "$(date)" "$(echo "$SSH_CLIENT" | cut -d' ' -f 1)" "$(whoami)" "$sship" >> $logfile
+	    fi
         fi
 	devselect
     done
@@ -76,3 +82,4 @@ function devselect(){
 printf "%s | IP %s (%s) Connected to the jump server\n" "$(date)" "$(echo "$SSH_CLIENT" | cut -d' ' -f 1)" "$(whoami)" >> $logfile
 clear
 listdevs
+clear
