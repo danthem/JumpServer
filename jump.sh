@@ -26,10 +26,10 @@ function listdevs(){
     #Is user an admin account? If so read in all devices, else read all devices where admin_only=0
     isadmin=$(sqlite3 $dbase "select EXISTS (select * from users where username=\"$(whoami)\" COLLATE NOCASE AND admin=1);")
     if [[ $isadmin -eq 1 ]]; then
-        readarray -t "devices" <<< $(sqlite3 -list -separator " | " $dbase "select os, comment, ip from devices where enabled=1 order by os desc;")
+        readarray -t "devices" <<< $(sqlite3 -list -separator " | " $dbase "select os, hostname, ip from devices where enabled=1 order by os desc;")
         printf "${green} >>> Admin user detected${normal}\n"
     else
-        readarray -t "devices" <<< $(sqlite3 -list -separator " | " $dbase "select os, comment, ip from devices where enabled=1 and admin_only=0 order by os desc;")
+        readarray -t "devices" <<< $(sqlite3 -list -separator " | " $dbase "select os, hostname, ip from devices where enabled=1 and admin_only=0 order by os desc;")
     fi
     devselect
 }
