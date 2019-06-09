@@ -9,7 +9,7 @@ It's set up to fit my needs, modify the DB etc as needed to fit your needs.
 ./jump.sh should be enough. But an alternative is to create users and set their shell to be the script (just make sure to check their permissions), this way as a user connects they will be directly presented with the list of available devices. Good if you're allowing other people access. Before running the script you have to set the database + logfile locations. You will also need to create devices in the database (script to automate this device creation is coming later)
 
 ## Setup
-Setup is fairly straight forward. You just need the script, a database with devices (more on this later) and a logfile destination. Database location is specified in the "dbase" variable in the script, log location in the "logfile variable". **You must update these variables to reflect actual location on your system**. 
+Setup is fairly straight forward. You just need the script, a database with devices (more on this later) and a logfile destination. Database location is specified in the "dbase" variable in the script, log location in the "logfile" variable. **You must update these variables to reflect actual location on your system**. 
 
 I've included a template database here in the report (database/jumpdb.sq3), the database consists of three tables, covered in more detail below.
 ### Database
