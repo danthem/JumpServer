@@ -27,7 +27,6 @@ function listdevs(){
     isadmin=$(sqlite3 $dbase "select EXISTS (select * from users where username=\"$(whoami)\" COLLATE NOCASE AND admin=1);")
     if [[ $isadmin -eq 1 ]]; then
         readarray -t "devices" <<< $(sqlite3 -list -separator " | " $dbase "select os, hostname, ip from devices where enabled=1 order by os desc;")
-        printf "${green} >>> Admin user detected${normal}\n"
     else
         readarray -t "devices" <<< $(sqlite3 -list -separator " | " $dbase "select os, hostname, ip from devices where enabled=1 and admin_only=0 order by os desc;")
     fi
@@ -40,11 +39,13 @@ function devselect(){
     echo -ne "\033]0;Jump Server\007"
     clear
     printf "================================\n| ${yellow}Daniel's Awesome Jump Server${normal} |\n================================\n"
-    printf "\n${yellow}Note: ${normal}Activity on this jump server is logged.\n" 
-    printf "\n"
     if [[ $isadmin -eq 1 ]]; then
-        printf "${green} >>> Admin user detected${normal}\n"
+	    printf ">>>>> Welcome ${blue}%s${normal} (${green}admin${normal})!\n" "$(whoami)"
+    else
+	    printf ">>>>> Welcome ${blue}%s${normal}!\n" "$(whoami)"
     fi
+    printf "${yellow}Note: ${normal}Activity on this jump server is logged.\n" 
+    printf "\n${blue}Select a device:${normal}\n"
     COLUMNS=1
     PS3='Which device do you want to jump to?: '
     select opt in "${devices[@]}"
