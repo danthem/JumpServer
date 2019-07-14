@@ -1,6 +1,5 @@
 #!/bin/bash
 #Author: Daniel Elf
-#Update: 09/06/2019
 ############# Description ############
 #   For easy jumping from my 'jump' server to other servers.
 ######################################
@@ -13,7 +12,7 @@ green=$(tput setaf 2)
 yellow=$(tput setaf 3)
 red=$(tput setaf 1)
 normal=$(tput sgr0) # default color
-
+servermode=$(sqlite3 $dbase 'select mode from serverstatus where id=1;')
 
 function listdevs(){
     #Does user exist and is enabled? 
@@ -79,6 +78,20 @@ function devselect(){
 	devselect
     done
 }
+
+if [[ $servermode == "Maintenance" || $servermode == "maintenance" ]]; then
+	clear
+	printf "${yellow}Jump server is currently in ${red}maintenance mode${yellow}.\nReason: ${blue}%s${normal}\n\nPlease check back again later.\n\n" "$(sqlite3 $dbase 'select reason from serverstatus where id=1;')"
+	printf "%s | IP %s (%s) Tried to connect to server but server is in maintenance mode.\n" "$(date)" "$(echo "$SSH_CLIENT" | cut -d' ' -f 1)" "$(whoami)" >> $logfile
+	printf "Automatically exiting in 5 seconds"
+	for i in {1..5}; do
+		printf "."
+		sleep 1
+	done
+	printf " Good bye.\n"
+	exit 1
+fi
+
 
 printf "%s | IP %s (%s) Connected to the jump server\n" "$(date)" "$(echo "$SSH_CLIENT" | cut -d' ' -f 1)" "$(whoami)" >> $logfile
 clear

@@ -43,8 +43,7 @@ function mainmenu(){
             delusr
             ;;
         "Change Server Mode")
-            read -p "WIP - press enter to return to main menu"
-            mainmenu
+            changemode
             ;;
         "Quit")
             exit 0
@@ -77,7 +76,7 @@ mainmenu
 }
 
 function enadevice() {
-    printf "\n== ENABLE a device ==\n First we'll list all of the devices available, then just enter the ID of the device you want to enable\n"
+    printf "\n== ENABLE a device ==\nFirst we'll list all currently disabled devices.\n"
     sqlite3 --header --column $dbase "select * from devices where enabled=0"
     read -p "Enter ID of the device you want to ENABLE: " -e devid
     sqlite3 $dbase "UPDATE devices SET enabled=1 WHERE id=$devid"
@@ -86,7 +85,7 @@ function enadevice() {
 
 }
 function disdevice() {
-    printf "\n== Disable a device ==\n First we'll list all of the devices available, then just enter the ID of the device you want to disable\n"
+    printf "\n== Disable a device ==\nFirst we'll list all currently enabled devices\n"
     sqlite3 --header --column $dbase "select * from devices where enabled=1"
     printf "\n"
     read -p "Enter ID of the device you want to DISABLE: " -e devid
@@ -127,6 +126,40 @@ function delusr() {
         read -p "No username given. Press enter to return to main menu"
     fi
     mainmenu
+}
+
+function changemode(){
+    clear
+    printf "\n== See and modify the server mode ==\n"
+    printf "Current mode: %s\n" "$(sqlite3 $dbase "select mode from serverstatus;")"
+    COLUMNS=1
+    PS3='Please enter your choice: '
+    options=("Normal" "Maintenance" "Return to main menu")
+    select opt in "${options[@]}"; do
+        case $opt in
+        "Normal")
+            printf "Setting server mode to NORMAL.\n"
+	        sqlite3 $dbase "update serverstatus set mode='Normal', reason='', who='$(whoami)', time='$(date "+%Y-%m-%d %H:%M:%S")' where id=1;"
+            printf "%s | IP %s (%s) Changed server mode to NORMAL.\n" "$(date)" "$userip" "$(whoami)" >> $logfile
+	        printf "Press enter to return to main menu\n"
+	        read 
+	        mainmenu
+	        ;;
+        "Maintenance")
+           read -p "Enter maintenance reason: " -e maintreason
+            sqlite3 $dbase "update serverstatus set mode='Maintenance', reason='$maintreason', who='$(whoami)', time='$(date "+%Y-%m-%d %H:%M:%S")' where id=1;"
+            printf "Changed server mode to MAINTENACE, user access is now disabled.\n"
+            printf "%s | IP %s (%s) Changed server mode to MAINTENANCE. Reason: %s\n" "$(date)" "$userip" "$(whoami)" "$maintreason" >> $logfile
+            printf "Press enter to return to main menu\n"
+            read
+            mainmenu
+	        ;;
+        "Return to main menu")
+            mainmenu
+            ;;
+        *) echo invalid option;;
+    esac
+    done
 }
 
 
