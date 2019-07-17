@@ -76,21 +76,33 @@ mainmenu
 }
 
 function enadevice() {
-    printf "\n== ENABLE a device ==\nFirst we'll list all currently disabled devices.\n"
-    sqlite3 --header --column $dbase "select * from devices where enabled=0"
-    read -p "Enter ID of the device you want to ENABLE: " -e devid
-    sqlite3 $dbase "UPDATE devices SET enabled=1 WHERE id=$devid"
-    read -p "Device enabled. Press enter to return to main menu "
+    disdevices=$(sqlite3 $dbase 'select exists (select * from devices where enabled=0)')
+    if [[ disdevices -ne 0 ]]; then
+         printf "\n\n== ENABLE a device ==\nBelow are all currently disabled devices:\n"
+         sqlite3 --header --column $dbase "select * from devices where enabled=0"
+	 printf "\n"
+    	 read -p "Enter ID of the device you want to ENABLE: " -e devid
+	 sqlite3 $dbase "UPDATE devices SET enabled=1 WHERE id=$devid"
+	 printf "Device has been enabled.\n"
+    else
+	printf "There are no disabled devices at the moment, so there are no devices to enable.\n"
+    fi  
+    read -p "Press enter to return to main menu "
     mainmenu
 
 }
 function disdevice() {
-    printf "\n== Disable a device ==\nFirst we'll list all currently enabled devices\n"
-    sqlite3 --header --column $dbase "select * from devices where enabled=1"
-    printf "\n"
-    read -p "Enter ID of the device you want to DISABLE: " -e devid
-    sqlite3 $dbase "UPDATE devices SET enabled=0 WHERE id=$devid"
-    read -p "Device disabled. Press enter to return to main menu "
+    enadevices=$(sqlite3 $dbase 'select exists (select * from devices where enabled=1)')
+    if [[ enadevices -ne 0 ]]; then
+        printf "\n== Disable a device ==\Below are all currently enabled devices\n"
+        sqlite3 --header --column $dbase "select * from devices where enabled=1"
+        printf "\n"
+        read -p "Enter ID of the device you want to DISABLE: " -e devid
+        sqlite3 $dbase "UPDATE devices SET enabled=0 WHERE id=$devid"
+    else
+        printf "There are no enabled devices at the moment, so there are no devices to disable.\n"
+    fi
+    read -p "Press enter to return to main menu "
     mainmenu
 }
 
