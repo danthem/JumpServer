@@ -1,14 +1,20 @@
 #!/bin/bash
 #Auther Daniel Elf
-#Description: This is a very basic addon for creating and managing users + devices for jump.sh jumpserver.
+#Description: This is a simple addon for creating and managing users + devices for jump.sh jumpserver.
 #Note: This is a very basic/simple script with little to no check of input data... It's assumed that you enter 'real' values
 userip=$(echo "$SSH_CLIENT" | cut -d' ' -f 1)
 logfile=/var/log/jumpserver.log
 dbase=/data/git/JumpServer/database/jumpdb.sq3
+blue=$(tput setaf 6)
+green=$(tput setaf 2)
+yellow=$(tput setaf 3)
+red=$(tput setaf 1)
+normal=$(tput sgr0) # default color
 
 function mainmenu(){
     clear
-    printf "==== Control panel for administrating devices and users for the jumpserver ====\n"
+    printf "============================\n| ${yellow}Jumpserver Control Panel${normal} |\n============================\n" 
+    printf "Current server mode: ${blue}%s${normal}\n" "$(sqlite3 $dbase "select mode from serverstatus;")"   
     printf "\nSelect task:\n"
     COLUMNS=1
     PS3='Please enter your choice: '
@@ -16,8 +22,10 @@ function mainmenu(){
     select opt in "${options[@]}"; do
         case $opt in
         "List all devices")
-            printf "\n\nListing all devices currently in database:\n"
+            printf "\n\n== ${yellow}All devices currently in database${normal} ==\n"
+            printf "${blue}"
             sqlite3 --header --column $dbase "select * from devices"
+            printf "${normal}\n"
             read -p "Press enter to return to main menu "
             mainmenu
             ;;
@@ -31,8 +39,10 @@ function mainmenu(){
             disdevice
             ;;
         "List all users")
-            printf "\n\nListing all users currently in database:\n"
+            printf "\n\n== ${yellow}All users currently in database ${normal}==\n"
+            printf "${blue}"
             sqlite3 --header --column $dbase "select * from users"
+            printf "${normal}\n"
             read -p "Press enter to return to main menu "
             mainmenu
             ;;
@@ -55,13 +65,15 @@ function mainmenu(){
 
 function adddevice() { 
 #(id INTEGER PRIMARY KEY, ip TEXT NOT NULL UNIQUE, os TEXT NOT NULL, hostname TEXT NOT NULL UNIQUE, user TEXT NOT NULL, comment TEXT, admin_only INTEGER NOT NULL DEFAULT 0, enabled INTEGER NOT NULL DEFAULT 1);
-    printf "\n== Adding a new device ==\n\nTo add a new device we will need the following details: IP, OS, Hostname, User, Comment, admin_only\n"
+    printf "\n== ${yellow}Adding a new device${normal} ==\n\nTo add a new device we will need the following details: IP, OS, Hostname, User (to login with), Comment, admin_only\n"
     for i in ip os hostname user comment; do 
         read -p "$i: " -e dev${i}
     done
 
     read -p "Is this device only for admin accounts? (1 or 0): " -e devadmin_only
-    if [[ $devadmin_only -ne "1" ]]; then
+    if [[ $devadmin_only == "1" || $devadmin_only == "Y" || $devadmin_only == "y" || $devadmin_only == "yes" || $devadmin_only == "Yes" ]]; then
+        devadmin_only=1
+    else
         devadmin_only=0
     fi
 
@@ -76,26 +88,38 @@ mainmenu
 }
 
 function enadevice() {
-    printf "\n== ENABLE a device ==\nFirst we'll list all currently disabled devices.\n"
-    sqlite3 --header --column $dbase "select * from devices where enabled=0"
-    read -p "Enter ID of the device you want to ENABLE: " -e devid
-    sqlite3 $dbase "UPDATE devices SET enabled=1 WHERE id=$devid"
-    read -p "Device enabled. Press enter to return to main menu "
+    disdevices=$(sqlite3 $dbase 'select exists (select * from devices where enabled=0)')
+    if [[ disdevices -ne 0 ]]; then
+         printf "\n\n== ${yellow}ENABLE a device${normal} ==\nBelow are all currently disabled devices:\n"
+         sqlite3 --header --column $dbase "select * from devices where enabled=0"
+	 printf "\n"
+    	 read -p "Enter ID of the device you want to ENABLE: " -e devid
+	 sqlite3 $dbase "UPDATE devices SET enabled=1 WHERE id=$devid"
+	 printf "Device has been enabled.\n"
+    else
+	printf "${red}\nError: ${yellow}There are no disabled devices at the moment, so there are no devices to enable.${normal}\n\n"
+    fi  
+    read -p "Press enter to return to main menu "
     mainmenu
 
 }
 function disdevice() {
-    printf "\n== Disable a device ==\nFirst we'll list all currently enabled devices\n"
-    sqlite3 --header --column $dbase "select * from devices where enabled=1"
-    printf "\n"
-    read -p "Enter ID of the device you want to DISABLE: " -e devid
-    sqlite3 $dbase "UPDATE devices SET enabled=0 WHERE id=$devid"
-    read -p "Device disabled. Press enter to return to main menu "
+    enadevices=$(sqlite3 $dbase 'select exists (select * from devices where enabled=1)')
+    if [[ enadevices -ne 0 ]]; then
+        printf "\n== ${yellow}DISABLE a device${normal} ==\Below are all currently enabled devices\n"
+        sqlite3 --header --column $dbase "select * from devices where enabled=1"
+        printf "\n"
+        read -p "Enter ID of the device you want to DISABLE: " -e devid
+        sqlite3 $dbase "UPDATE devices SET enabled=0 WHERE id=$devid"
+    else
+        printf "${red}\nError: ${yellow}There are no enabled devices at the moment, so there are no devices to disable.${normal}\n\n"
+    fi
+    read -p "Press enter to return to main menu "
     mainmenu
 }
 
 function addusr() {
-    printf "\n== Adding a new user ==\n" 
+    printf "\n== ${yellow}Adding a new user${normal} ==\n" 
     for i in username comment; do 
         read -p "$i: " -e usr${i}
     done
@@ -105,9 +129,9 @@ function addusr() {
     fi
     sqlite3 $dbase "INSERT INTO users(username, comment, admin, enabled) VALUES('$usrusername', '$usrcomment', '$usradmin', '1');"
     if [[ $? -ne "0" ]]; then
-        printf "Failed to user device (see error above). Press enter to return to main menu.\n\n"
+        printf "${red}Failed to add user${normal} (see error above). Press enter to return to main menu.\n\n"
     else
-        printf "Successfully added user! Press enter to return to main menu.\n\n"
+        printf "${green}Successfully added user!${normal} Press enter to return to main menu.\n\n"
     fi
 read -s
 mainmenu
@@ -115,13 +139,18 @@ mainmenu
 
 
 function delusr() {
-    printf "\n== Delete a user ==\n First we'll list all users, then just enter the username you want to delete\n"
+    printf "\n== ${yellow}Delete a user${normal} ==\n Here are current users:\n"
     sqlite3 --header --column $dbase "SELECT * FROM users"
     printf "\n"
-    read -p "Enter username of the user you want to DELETE: " -e usrusername
+    read -p "Enter username of the user you want to DELETE (or blank for nobody): " -e usrusername
     if [[ ! -z $usrusername ]]; then
-        sqlite3 $dbase "DELETE FROM users WHERE username=$usrusername"
-        read -p "Device disabled. Press enter to return to main menu "
+        sqlite3 $dbase "DELETE FROM users WHERE username=$usrusername" 2> /dev/zero
+        if [[ $? -eq 0 ]]; then
+            read -p "${green}User has been deleted${normal}. Press enter to return to main menu "
+        else
+            printf "${red}Failed to delete user ${blue}%s${normal}, check username and try again.\n" "$usrusername"
+            read -p "Press enter to return to main menu "
+        fi
     else
         read -p "No username given. Press enter to return to main menu"
     fi
@@ -130,15 +159,15 @@ function delusr() {
 
 function changemode(){
     clear
-    printf "\n== See and modify the server mode ==\n"
-    printf "Current mode: %s\n" "$(sqlite3 $dbase "select mode from serverstatus;")"
+    printf "== ${yellow}See and modify the server mode${normal} ==\n"
+    printf "Current mode: ${blue}%s${normal}\n" "$(sqlite3 $dbase "select mode from serverstatus;")"
     COLUMNS=1
     PS3='Please enter your choice: '
     options=("Normal" "Maintenance" "Return to main menu")
     select opt in "${options[@]}"; do
         case $opt in
         "Normal")
-            printf "Setting server mode to NORMAL.\n"
+            printf "${yellow}Setting server mode to ${green}NORMAL${normal}.\n"
 	        sqlite3 $dbase "update serverstatus set mode='Normal', reason='', who='$(whoami)', time='$(date "+%Y-%m-%d %H:%M:%S")' where id=1;"
             printf "%s | IP %s (%s) Changed server mode to NORMAL.\n" "$(date)" "$userip" "$(whoami)" >> $logfile
 	        printf "Press enter to return to main menu\n"
@@ -146,9 +175,13 @@ function changemode(){
 	        mainmenu
 	        ;;
         "Maintenance")
-           read -p "Enter maintenance reason: " -e maintreason
+            read -p "Enter maintenance reason: " -e maintreason
+            while [[ -z $maintreason ]]; do
+                printf "${red}Error:${yellow} You have to enter a maintenance reason.${normal}\n"
+                read -p "Enter maintenance reason: " -e maintreason
+            done
             sqlite3 $dbase "update serverstatus set mode='Maintenance', reason='$maintreason', who='$(whoami)', time='$(date "+%Y-%m-%d %H:%M:%S")' where id=1;"
-            printf "Changed server mode to MAINTENACE, user access is now disabled.\n"
+            printf "${yellow}Changed server mode to ${red}MAINTENACE${yellow}, user access is now disabled.${normal}\n"
             printf "%s | IP %s (%s) Changed server mode to MAINTENANCE. Reason: %s\n" "$(date)" "$userip" "$(whoami)" "$maintreason" >> $logfile
             printf "Press enter to return to main menu\n"
             read
