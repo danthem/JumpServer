@@ -50,5 +50,5 @@ The script will use whatever username is specified for a device in the sqlite3 d
 The script does rely on performing a ping check before attempting to SSH to a device, if your network blocks ICMP traffic you might want to get rid of that if statement. The ping timeout is set to 2 seconds, if you expect longer ping times than that you will need to increase it as well. If the ping test fails it will not attempt SSH'ing.
 
 ### Final note
-This project is mostly a 'skeleton project' that should be adjusted to fit your requirements. For me it's run in a pure non-prod lab environment where there's no concern about unauthorized access breaking of features. 
+This project is mostly a 'skeleton project' that should be built upon and adjusted to fit your requirements. For me it's run in a pure non-prod lab environment where there's no concern about unauthorized access or so.
 
