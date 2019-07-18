@@ -1,6 +1,6 @@
 #!/bin/bash
 #Auther Daniel Elf
-#Description: This is a somple addon for creating and managing users + devices for jump.sh jumpserver.
+#Description: This is a simple addon for creating and managing users + devices for jump.sh jumpserver.
 #Note: This is a very basic/simple script with little to no check of input data... It's assumed that you enter 'real' values
 userip=$(echo "$SSH_CLIENT" | cut -d' ' -f 1)
 logfile=/var/log/jumpserver.log
