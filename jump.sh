@@ -45,7 +45,7 @@ function devselect(){
     fi
     printf "${yellow}Note: ${normal}Activity on this jump server is logged.\n" 
     printf "\n${blue}Select a device to jump to:${normal}\n"
-    printf "%s\n" "---------------------------"
+    #printf "%s\n" "---------------------------"
     COLUMNS=1
     PS3=$'\n''Which device do you want to jump to?: '
     select opt in "${devices[@]}"
