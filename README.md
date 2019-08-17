@@ -1,4 +1,4 @@
-**This repo is a WIP... The jumpserver and cpanel scripts work but are still being improved. Instructions in this README may not be fully up to date.
+**This repo is a WIP... The jumpserver, setup and cpanel scripts work but are still being improved. Instructions in this README may not be fully up to date.
 
 # JumpServer
 A simple 'jump server' bash script reading available devices from a sqlite3 database. For this reason you'll obviously need sqlite3 on your machine.
