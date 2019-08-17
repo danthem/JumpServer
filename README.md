@@ -9,7 +9,10 @@ It's set up to fit my needs, modify the DB etc as needed to fit your needs.
 ./jump.sh should be enough. But an alternative is to create users and set their shell to be the script (just make sure to check their permissions), this way as a user connects they will be directly presented with the list of available devices. Good if you're allowing other people access. Before running the script you have to set the database + logfile locations. You will also need to create devices in the database, you can do it manually in the database (tables described further down) or by using cpanel.sh. 
 
 ## Setup
-Setup is fairly straight forward. You just need the script, a database with devices (more on this later) and a logfile destination. Database location is specified in the "dbase" variable in the script, log location in the "logfile" variable. **You must update these variables to reflect actual location on your system**. 
+**Update 03/08/2019:** Setup is now easier than every before! All you need is the setup.sh which is an interactive installer. Run this script and it will automatically check dependencies, ask you for install path(s) and get the rest of the required scripts + db template! Run setup.sh and then add devices with cpanel.sh, your jump server will be up and running in less than 5 minutes.
+
+Old setup steps below (if you prefer the more manual way of doing things):
+Setup is fairly straight forward. You just need the script, a database with devices (more on this later) and a logfile destination. Database location is specified in the "dbase" variable in the script, log location in the "logfile" variable. You must update these variables to reflect actual location on your system. 
 
 I've included a template database here in the report (database/jumpdb.sq3), the database consists of three tables, covered in more detail further down.
 
