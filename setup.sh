@@ -115,7 +115,22 @@ if [[ $autoadduser == "1" || $autoadduser == "Y" || $autoadduser == "y" || $auto
     sqlite3 $dbasepath/jumpdb.sq3 "INSERT INTO users(username, comment, admin, enabled) VALUES('$(whoami)', 'Added via setup.sh', '1', '1');"
     printf "User ${blue}%s${normal} has been added as an admin user.\n\n" "$(whoami)"
 else
-    printf "Ok, not adding user ${blue}%s${normal} right now. You can manually add this user through the cpanel.sh later.\n\n" "$(whoami)"
+    printf "Ok, not adding user ${blue}%s${normal} right now. You can manually add users through the cpanel.sh later.\n" "$(whoami)"
 fi
-
+printf "Actually.."
+sleep 1
+printf " wait.."
+sleep 1
+printf " one more thing!\n"
+sleep 2
+printf "I can launch the cpanel for you so that you can add new devices now!\n"
+read -p "Do you want to launch the control panel? (y/N): " -e launchcpanel
+if [[ $launchcpanel == "1" || $launchcpanel == "Y" || $launchcpanel == "y" || $launchcpanel == "yes" || $launchcpanel == "Yes" ]]; then
+    printf "Ok! Off you go...\n\n"
+    sleep 2
+    bash ${scriptpath}/cpanel.sh
+else
+    printf "Alright! You can find the cpanel later at %s/cpanel.sh... For now, good bye!\n\n" "$scriptpath"
+    sleep 1
+fi
 printf "\n==== ${yellow}End of Setup${normal} ====\n\n"
