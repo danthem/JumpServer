@@ -127,7 +127,7 @@ function adddevice() {
     if [[ $? -ne "0" ]]; then
         printf "Failed to add device (see error above). Press enter to return to device management menu.\n\n"
     else
-        printf "Successfully added device! Press enter to return to deice management menu.\n\n"
+        printf "Successfully added device! Press enter to return to device management menu.\n\n"
     fi
     read -s
     devicemgmt
