@@ -116,7 +116,11 @@ function adddevice() {
     for i in ip os hostname user comment; do 
         read -p "$i: " -e dev${i}
     done
-
+    #Check that none of the necessary fields are left empty;
+    if [[ -z $devip || -z $devos || -z $devhostname || -z $devuser ]]; then 
+        printf "${red}Error:${yellow} One of the required fields (IP, OS, hostname or user) was left empty. Try again.\n\n"
+        adddevice
+    fi
     read -p "Is this device only for admin accounts? (1 or 0): " -e devadmin_only
     if [[ $devadmin_only == "1" || $devadmin_only == "Y" || $devadmin_only == "y" || $devadmin_only == "yes" || $devadmin_only == "Yes" ]]; then
         devadmin_only=1
@@ -127,7 +131,7 @@ function adddevice() {
     if [[ $? -ne "0" ]]; then
         printf "Failed to add device (see error above). Press enter to return to device management menu.\n\n"
     else
-        printf "Successfully added device! Press enter to return to deice management menu.\n\n"
+        printf "Successfully added device! Press enter to return to device management menu.\n\n"
     fi
     read -s
     devicemgmt
@@ -262,7 +266,7 @@ function changemode(){
     done
 }
 
-
+#EXECUTION STARTS HERE
 
 #Check and make sure that dbase and logfile exists. Else throw error and tell user to update locations.
 if [[ ! -f $dbase || ! -f $logfile ]]; then
