@@ -43,15 +43,15 @@ printf "\nGreat, looks like we have what we need to proceed!\n\n"
 sleep 1
 printf "Now we need to decide where to save ${blue}jump.sh${normal} and ${blue}cpanel.sh${normal}.\n"
 printf "If the path does not exist, we will create it via mkdir -p.\n"
-read -p "Please enter FULL path where to store scripts: " -e scriptpath
+read -p "Please enter FULL path to the DIRECTORY where scripts should be stored: " -e scriptpath
 printf "Will store scripts in ${blue}%s${normal}\n" "$scriptpath"
 mkdir -p "$scriptpath"
 if [[ $? -ne 0 ]]; then
     printf "${red}Error${yellow}: Failed to mkdir -p ${blue}%s${normal}\n" "$scriptpath"
     printf "This likely means that you don't have write permissions here, fix this and try again.\n\nExiting.\n\n"
 fi
-printf "\nThe Jumpserver relies on a database to track devices and users.\nTime to decide where to save the database ${blue}jumpdb.sq3${normal}.\n"
-read -p "Please enter FULL path where to store the database: " -e dbasepath
+printf "\nThe Jumpserver relies on a database to track devices and users.\nTime to decide where to store the database ${blue}jumpdb.sq3${normal}.\n"
+read -p "Please enter FULL path to the DIRECTORY where the database should be stored: " -e dbasepath
 printf "Will store database in ${blue}%s${normal}\n" "$dbasepath"
 mkdir -p "$dbasepath"
 if [[ $? -ne 0 ]]; then
@@ -60,7 +60,7 @@ if [[ $? -ne 0 ]]; then
 fi
 printf "\nGreat! The Jumpserver does log multiple types of events.\nWhere do you want to store ${blue}jumpserver.log${normal}?\n"
 printf "${yellow}Note:${normal} Only enter the directory path, do not include the \"jumpserver.log\" part.\n"
-read -p "Please enter FULL path to the DIRECTORY where to save jumpserver.log: " -e logpath
+read -p "Please enter FULL path to the DIRECTORY where jumpserver.log should be stored: " -e logpath
 printf "Will use ${blue}%s/jumpserver.log${normal} as log file\n" "$dbasepath"
 mkdir -p "$logpath"
 if [[ $? -ne 0 ]]; then
@@ -88,14 +88,30 @@ if [[ $? -ne 0 ]]; then
     printf "${red}ERROR:${yellow} Failed to download file, check Internet connection and try again.\n\nExiting.\n\n"
     exit 2
 fi
-printf "${green}Success.\n${normal}Downloading ${blue}jumpdb.sq3${normal}... "
-wget --no-check-certificate -q https://github.com/danthem/JumpServer/raw/master/database/jumpdb.sq3 -P $dbasepath/ >& /dev/null
-if [[ $? -ne 0 ]]; then
-    printf "${red}ERROR:${yellow} Failed to download file, check Internet connection and try again.\n\nExiting.\n\n"
-    exit 2
-fi
 printf "${green}Success.\n\n${normal}All required files downloaded successfully.\n"
+
+#Below was added to address issue #6 on github ("Don't download sqlite3 database (setup.sh)")
+printf "\nBuilding the database...\nCreating DB: "
+dbase="${dbasepath}/jumpdb.sq3"
+touch "$dbase"
+if [[ $? -ne 0 ]]; then
+    printf "Failed to create database, do we have write permissions in %s?\n\nExiting\n" "$dbasepath"
+    exit 255
+fi
+printf "${green}Done${normal}.\nCreating \'users\' table: "
+sqlite3 "$dbase" "CREATE TABLE users(username TEXT NOT NULL UNIQUE, comment TEXT, admin INTEGER NOT NULL DEFAULT 0, enabled INTEGER NOT NULL DEFAULT 1);"
 sleep 0.5
+printf "${green}Done${normal}.\nCreating \'serverstatus\' table: "
+sqlite3 "$dbase" "CREATE TABLE serverstatus(id INTEGER PRIMARY KEY, mode TEXT NOT NULL, reason TEXT, who TEXT NOT NULL, time TEXT NOT NULL);"
+sqlite3 "$dbase" "INSERT INTO serverstatus VALUES(1,'normal','','$(whoami)','$(date "+%Y-%m-%d %H:%M:%S")');"
+sleep 0.5
+printf "${green}Done${normal}.\nCreating \'devices\' table: "
+sqlite3 "$dbase" "CREATE TABLE devices(id INTEGER PRIMARY KEY, ip TEXT NOT NULL UNIQUE, os TEXT NOT NULL, hostname TEXT NOT NULL UNIQUE, user TEXT NOT NULL, comment TEXT, admin_only INTEGER NOT NULL DEFAULT 0, enabled INTEGER NOT NULL DEFAULT 1);"
+sleep 0.5
+printf "${green}Done${normal}\n\nDatabase creates successfully..\n"
+sleep 0.5
+
+
 printf "\nWe'll now try to chmod +x jump.sh and cpanel.sh..."
 chmod +x $scriptpath/jump.sh $scriptpath/cpanel.sh
 sleep 0.5
@@ -108,7 +124,7 @@ sleep 0.5
 printf "${green}Done!${normal}\n\n"
 sleep 1
 printf "Everything is sorted! \nNow you just need to create user(s) and add devices, you can do so from the control panel (${blue}%s/cpanel.sh${normal})\n" "$scriptpath"
-printf "\nActually... One final thing. You're running this setup script as ${blue}%s${normal}, if you want we can add you as an admin user right away." "$(whoami)"
+printf "\nOne final thing... You're running this setup script as ${blue}%s${normal}, if you want we can add you as an admin user right away." "$(whoami)"
 printf "\nOtherwise you can manually add user(s) later in the cpanel.sh\n"
 read -p "Do you want to add yourself as an admin usr right now? (y/N): " -e autoadduser
 if [[ $autoadduser == "1" || $autoadduser == "Y" || $autoadduser == "y" || $autoadduser == "yes" || $autoadduser == "Yes" ]]; then
@@ -118,7 +134,7 @@ else
     printf "Ok, not adding user ${blue}%s${normal} right now. You can manually add users through the cpanel.sh later.\n" "$(whoami)"
 fi
 printf "Actually.."
-sleep 1
+sleep 0.5
 printf " wait.."
 sleep 1
 printf " one more thing!\n"
