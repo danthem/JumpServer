@@ -27,7 +27,7 @@ function listdevs(){
     if [[ $isadmin -eq 1 ]]; then
         readarray -t "devices" <<< $(sqlite3 -list -separator ",|," $dbase "select os, hostname, ip from devices where enabled=1 order by os desc;" | column -s"," -t)
     else
-        readarray -t "devices" <<< $(sqlite3 -list -separator ",|," $dbase "select os, hostname, ip from devices where enabled=1 and admin_only=0 order by os desc;" | columnn -s"," -t)
+        readarray -t "devices" <<< $(sqlite3 -list -separator ",|," $dbase "select os, hostname, ip from devices where enabled=1 and admin_only=0 order by os desc;" | column -s"," -t)
     fi
     devselect
 }
